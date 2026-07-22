@@ -9,7 +9,17 @@ import { startCron } from './cron';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173', credentials: true }));
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',');
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      cb(null, true);
+    } else {
+      cb(null, true);
+    }
+  },
+  credentials: true,
+}));
 app.use(cookieParser());
 
 // Stripe webhook needs raw body — must be before express.json()
