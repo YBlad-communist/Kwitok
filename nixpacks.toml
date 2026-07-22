@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_18", "openssl"]
+
+[phases.install]
+cmds = ["cd apps/api && npm i"]
+
+[phases.build]
+cmds = ["cd apps/api && npx prisma generate"]
+
+[start]
+cmd = "cd apps/api && npx prisma migrate deploy && npx tsx src/index.ts"

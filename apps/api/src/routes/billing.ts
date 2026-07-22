@@ -3,11 +3,20 @@ import Stripe from 'stripe';
 import prisma from '../lib/prisma';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2025-02-24' as any });
 const router = Router();
+
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  const Stripe = require('stripe');
+  return new Stripe(key, { apiVersion: '2025-02-24' as any });
+}
 
 router.get('/checkout-session', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
+    const stripe = getStripe();
+    if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
+
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -35,6 +44,9 @@ router.get('/checkout-session', authMiddleware, async (req: AuthRequest, res: Re
 
 router.get('/portal-session', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
+    const stripe = getStripe();
+    if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
+
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
     if (!user || !user.stripeCustomerId) {
       return res.status(400).json({ error: 'No Stripe customer found' });
@@ -53,9 +65,12 @@ router.get('/portal-session', authMiddleware, async (req: AuthRequest, res: Resp
 });
 
 const handleWebhook = async (req: Request, res: Response) => {
-  const sig = req.headers['stripe-signature'] as string;
-  let event: Stripe.Event;
+  const stripe = getStripe();
+  if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
 
+  const sig = req.headers['stripe-signature'] as string;
+
+  let event: any;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
