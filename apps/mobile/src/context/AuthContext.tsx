@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { api, setToken } from '../api';
+import { api, saveTokens, clearTokens } from '../api/client';
 
 interface User {
   id: string;
@@ -14,7 +14,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,39 +28,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.user);
     } catch {
       setUser(null);
-      setToken(null);
     }
   }, []);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    if (!savedToken) {
-      setLoading(false);
-      return;
-    }
     refreshUser().finally(() => setLoading(false));
   }, [refreshUser]);
 
   const login = useCallback(async (email: string, password: string) => {
     const data = await api.auth.login(email, password);
-    setToken(data.token);
+    await saveTokens(data.accessToken, data.refreshToken);
     setUser(data.user);
   }, []);
 
   const register = useCallback(async (email: string, password: string) => {
     const data = await api.auth.register(email, password);
-    setToken(data.token);
+    await saveTokens(data.accessToken, data.refreshToken);
     setUser(data.user);
   }, []);
 
   const logout = useCallback(async () => {
-    await api.auth.logout();
-    setToken(null);
+    try { await api.auth.logout(); } catch {}
+    await clearTokens();
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

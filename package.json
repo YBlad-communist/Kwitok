@@ -1,4 +1,5 @@
 {
   "name": "kwitok",
-  "private": true
+  "private": true,
+  "workspaces": ["apps/*"]
 }

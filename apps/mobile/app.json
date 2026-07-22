@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Kvitok",
+    "slug": "kwitok",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "kwitok",
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kwitok.app"
+    },
+    "android": {
+      "package": "com.kwitok.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-web-browser"
+    ]
+  }
+}

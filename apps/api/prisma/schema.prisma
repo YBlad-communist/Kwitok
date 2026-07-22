@@ -8,31 +8,107 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  email             String   @unique
-  passwordHash      String
-  createdAt         DateTime @default(now())
+  id                    String   @id @default(cuid())
+  email                 String   @unique
+  passwordHash          String
+  pushToken             String?
+  timezone              String   @default("Europe/Riga")
+  currency              String   @default("EUR")
+  createdAt             DateTime @default(now())
 
-  stripeCustomerId       String?  @unique
-  stripeSubscriptionId   String?
-  subscriptionStatus     String?  // "trialing" | "active" | "past_due" | "canceled" | null
-  trialEndsAt             DateTime?
+  subscriptionStatus    String?
+  trialEndsAt           DateTime?
+  revenueCatCustomerId  String?  @unique
 
-  subscriptions     Subscription[]
+  bankConnections       BankConnection[]
+  accounts              Account[]
+  transactions          Transaction[]
+  budgets               Budget[]
+  categories            Category[]
 }
 
-model Subscription {
+model BankConnection {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider          String
+  institutionId     String
+  institutionName   String
+  requisitionId     String
+  status            String
+  consentExpiresAt  DateTime?
+  createdAt         DateTime @default(now())
+
+  accounts          Account[]
+}
+
+model Account {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankConnectionId    String
+  bankConnection      BankConnection @relation(fields: [bankConnectionId], references: [id], onDelete: Cascade)
+
+  externalAccountId   String
+  name                String
+  iban                String?
+  balance             Decimal?
+  currency            String   @default("EUR")
+  lastSyncedAt        DateTime?
+
+  transactions        Transaction[]
+}
+
+model Transaction {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  account               Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  externalTransactionId String   @unique
+  amount                Decimal
+  currency              String
+  merchantName          String?
+  description           String?
+  date                  DateTime
+  categoryId            String?
+  category              Category? @relation(fields: [categoryId], references: [id])
+  isManuallyRecategorized Boolean @default(false)
+  createdAt             DateTime @default(now())
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  icon        String
+  color       String
+  isSystem    Boolean  @default(false)
+
+  transactions        Transaction[]
+  budgets             Budget[]
+  merchantCategoryRules MerchantCategoryRule[]
+}
+
+model Budget {
   id          String   @id @default(cuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
 
-  name        String
-  price       Decimal
-  currency    String   @default("EUR")
-  cycle       String   // "weekly" | "monthly" | "quarterly" | "semiannual" | "yearly"
-  nextDate    DateTime
-  category    String
-  unused      Boolean  @default(false)
+  limitAmount Decimal
+  period      String
+  alertAt80   Boolean  @default(true)
   createdAt   DateTime @default(now())
-  cancelledAt DateTime?
+}
+
+model MerchantCategoryRule {
+  id            String @id @default(cuid())
+  merchantMatch String
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
 }
