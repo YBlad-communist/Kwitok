@@ -44,6 +44,7 @@ router.post('/register', async (req: AuthRequest, res: Response) => {
     });
 
     res.status(201).json({
+      token,
       user: {
         id: user.id,
         email: user.email,
@@ -85,6 +86,7 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
     });
 
     res.json({
+      token,
       user: {
         id: user.id,
         email: user.email,
