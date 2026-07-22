@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_18", "nodePackages.pnpm", "openssl"]
+nixPkgs = ["nodejs_18", "openssl"]
 
 [phases.install]
 cmds = ["npm i"]
