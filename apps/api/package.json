@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "npx prisma migrate deploy && npx tsx src/index.ts"
+    "start": "npx prisma db push && npx tsx src/index.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
